@@ -28,7 +28,7 @@ public class IdentificadoresService {
   AgroalDataSource defaultDataSource;
 
   public List<Identificador> getIdentificadores(String idConta) {
-    var result = identificadoresRepository.listByIdConta(Integer.getInteger(idConta));
+    var result = identificadoresRepository.listByIdConta(Integer.parseInt(idConta));
 
     return result;
   }
