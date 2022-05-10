@@ -1,39 +1,26 @@
 package com.service;
 
-import java.util.List;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import com.models.Identificador;
-import com.repository.IdentificadorRepositoryImpl;
+import com.repository.IdentificadorRepository;
 
-import io.agroal.api.AgroalDataSource;
-import io.vertx.mutiny.mysqlclient.MySQLPool;
+import io.smallrye.mutiny.Multi;
 
 @ApplicationScoped
 public class IdentificadoresService {
 
-  private final IdentificadorRepositoryImpl identificadoresRepository;
+  private final IdentificadorRepository identificadoresRepository;
 
   @Inject
-  public IdentificadoresService(IdentificadorRepositoryImpl identificadoresRepository) {
+  public IdentificadoresService(IdentificadorRepository identificadoresRepository) {
     this.identificadoresRepository = identificadoresRepository;
   }
 
-  @Inject
-  MySQLPool client;
-
-  @Inject
-  AgroalDataSource defaultDataSource;
-
-  public List<Identificador> getIdentificadores(String idConta) {
+  public Multi<Identificador> getIdentificadores(String idConta) {
     var result = identificadoresRepository.listByIdConta(Integer.parseInt(idConta));
 
     return result;
-  }
-
-  public List<Identificador> getAllIdentificadores() {
-    return identificadoresRepository.listAll();
   }
 }

@@ -1,13 +1,11 @@
 package com.repository;
 
-import java.util.List;
-
 import com.models.Identificador;
 
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.smallrye.mutiny.Multi;
 
-public interface IdentificadorRepository extends PanacheRepository<Identificador> {
+public interface IdentificadorRepository {
 
-  public List<Identificador> listByIdConta(Integer idConta);
+  public Multi<Identificador> listByIdConta(Integer idConta);
 
 }
