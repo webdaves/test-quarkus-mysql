@@ -3,8 +3,8 @@ package com.service;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import com.models.Identificador;
 import com.repository.IdentificadorRepository;
+import com.serializers.IdentificadorSerializer;
 
 import io.smallrye.mutiny.Multi;
 
@@ -18,9 +18,11 @@ public class IdentificadoresService {
     this.identificadoresRepository = identificadoresRepository;
   }
 
-  public Multi<Identificador> getIdentificadores(String idConta) {
+  public Multi<IdentificadorSerializer> getIdentificadores(String idConta) {
     var result = identificadoresRepository.listByIdConta(Integer.parseInt(idConta));
 
-    return result;
+    var serializad = result.map(identificador -> identificador.toSerializer());
+
+    return serializad;
   }
 }

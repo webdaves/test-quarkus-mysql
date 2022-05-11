@@ -4,7 +4,7 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
-import com.models.Identificador;
+import com.serializers.IdentificadorSerializer;
 import com.service.IdentificadoresService;
 
 import io.smallrye.mutiny.Multi;
@@ -21,7 +21,7 @@ public class IdentificadoresRest {
 
   @GET
   @Path("/{idConta}")
-  public Multi<Identificador> getIdentificadores(String idConta) {
+  public Multi<IdentificadorSerializer> getIdentificadores(String idConta) {
     var identificadores = service.getIdentificadores(idConta);
 
     return identificadores;
