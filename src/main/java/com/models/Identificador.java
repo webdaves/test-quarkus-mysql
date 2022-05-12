@@ -1,30 +1,35 @@
 package com.models;
 
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
+import com.enumeration.CategoriaEnum;
+import com.enumeration.MotivoInativacaoEnum;
+import com.enumeration.SituacaoIdentificadorEnum;
+import com.enumeration.TipoVeiculoEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.serializers.IdentificadorSerializer;
+import com.serializers.InformacoesGerenciaisSerializer;
+import com.serializers.VeiculoSerializer;
 
-@Entity
-@Table(name = "Identificador")
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@RegisterForReflection
 public class Identificador {
-
-  public Identificador() {
-
-  }
-
-  public Identificador(String idIdentificador) {
-    this.idIdentificador = idIdentificador;
-  }
-
-  @Id
   @JsonProperty(value = "id")
-  @Column(name = "id")
   private String idIdentificador;
 
   @JsonProperty(value = "nuIdentificador")
@@ -33,11 +38,8 @@ public class Identificador {
   @JsonProperty(value = "codIdentificador")
   private String codIdentificador;
 
-  @JsonProperty(value = "idConta")
-  private int idConta;
-
-  // @JsonProperty(value = "clienteConta")
-  // private ClienteConta clienteConta;
+  @JsonProperty(value = "clienteConta")
+  private ClienteConta clienteConta;
 
   @JsonProperty(value = "tipoIdentificador")
   private String tipoIdentificador;
@@ -45,141 +47,48 @@ public class Identificador {
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSS")
   private Date dataInclusao;
 
-  // private Veiculo veiculo;
+  private Veiculo veiculo;
 
-  private String apelido;
+  private SituacaoIdentificadorEnum situacao = SituacaoIdentificadorEnum.ATIVO;
 
-  // private SituacaoIdentificadorEnum situacao = SituacaoIdentificadorEnum.ATIVO;
-
-  // private MotivoInativacaoEnum motivoInativacao;
+  private MotivoInativacaoEnum motivoInativacao;
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSS")
   private Date dataAtualizacao;
 
-  // private Set<InformacaoGerencial> informacoesGerenciais;
+  private Set<InformacaoGerencial> informacoesGerenciais;
 
-  // private String canal;
+  private String canal;
 
-  private Boolean pap;
+  private int pap;
 
-  public String getIdIdentificador() {
-    return idIdentificador;
-  }
+  public IdentificadorSerializer toSerializer() {
+    IdentificadorSerializer identificador = new IdentificadorSerializer();
+    identificador.setIdIdentificador(this.getIdIdentificador());
+    identificador.setSituacao(this.getSituacao());
+    identificador.setCodIdentificador(this.getCodIdentificador());
+    identificador.setPap(this.getPap());
 
-  public void setIdIdentificador(String idIdentificador) {
-    this.idIdentificador = idIdentificador;
-  }
+    if (this.getVeiculo() != null) {
+      VeiculoSerializer veiculo = new VeiculoSerializer();
+      veiculo.setCategoria(Optional.ofNullable(this.getVeiculo()).map(Veiculo::getCategoria)
+          .map(CategoriaEnum::getDescricao).orElse(null));
+      veiculo.setPlaca(this.getVeiculo().getPlaca());
+      veiculo.setTipo(Optional.ofNullable(this.getVeiculo()).map(Veiculo::getCategoria)
+          .map(CategoriaEnum::getTipoVeiculo).map(TipoVeiculoEnum::getDescricao).orElse(null));
+      identificador.setVeiculo(veiculo);
+    }
 
-  public Long getNuIdentificador() {
-    return nuIdentificador;
-  }
+    if (this.getInformacoesGerenciais() != null && !this.getInformacoesGerenciais().isEmpty()) {
+      List<InformacoesGerenciaisSerializer> informacoesGerenciais = this.getInformacoesGerenciais()
+          .stream().map(InformacoesGerenciaisSerializer::new)
+          .collect(Collectors.toList());
 
-  public void setNuIdentificador(Long nuIdentificador) {
-    this.nuIdentificador = nuIdentificador;
-  }
+      informacoesGerenciais.sort(Comparator.comparing(InformacoesGerenciaisSerializer::getTipoInfo));
 
-  public String getCodIdentificador() {
-    return codIdentificador;
-  }
+      identificador.setInformacoesGerenciais(informacoesGerenciais);
+    }
 
-  public void setCodIdentificador(String codIdentificador) {
-    this.codIdentificador = codIdentificador;
-  }
-
-  public int getIdConta() {
-    return idConta;
-  }
-
-  public void setIdConta(int idConta) {
-    this.idConta = idConta;
-  }
-
-  // public ClienteConta getClienteConta() {
-  // return clienteConta;
-  // }
-
-  public String getTipoIdentificador() {
-    return tipoIdentificador;
-  }
-
-  public void setTipoIdentificador(String tipoIdentificador) {
-    this.tipoIdentificador = tipoIdentificador;
-  }
-
-  // public void setClienteConta(ClienteConta clienteConta) {
-  // this.clienteConta = clienteConta;
-  // }
-
-  // public Veiculo getVeiculo() {
-  // return veiculo;
-  // }
-
-  // public void setVeiculo(Veiculo veiculo) {
-  // this.veiculo = veiculo;
-  // }
-
-  public String getApelido() {
-    return apelido;
-  }
-
-  public void setApelido(String apelido) {
-    this.apelido = apelido;
-  }
-
-  // public SituacaoIdentificadorEnum getSituacao() {
-  // return situacao;
-  // }
-
-  // public void setSituacao(SituacaoIdentificadorEnum situacao) {
-  // this.situacao = situacao;
-  // }
-
-  // public MotivoInativacaoEnum getMotivoInativacao() {
-  // return motivoInativacao;
-  // }
-
-  // public void setMotivoInativacao(MotivoInativacaoEnum motivoInativacao) {
-  // this.motivoInativacao = motivoInativacao;
-  // }
-
-  public Date getDataInclusao() {
-    return dataInclusao;
-  }
-
-  public void setDataInclusao(Date dataInclusao) {
-    this.dataInclusao = dataInclusao;
-  }
-
-  public Date getDataAtualizacao() {
-    return dataAtualizacao;
-  }
-
-  public void setDataAtualizacao(Date dataAtualizacao) {
-    this.dataAtualizacao = dataAtualizacao;
-  }
-
-  // public Set<InformacaoGerencial> getInformacoesGerenciais() {
-  // return informacoesGerenciais;
-  // }
-
-  // public void setInformacoesGerenciais(Set<InformacaoGerencial>
-  // informacoesGerenciais) {
-  // this.informacoesGerenciais = informacoesGerenciais;
-  // }
-
-  // public String getCanal() {
-  //   return canal;
-  // }
-
-  // public void setCanal(String canal) {
-  //   this.canal = canal;
-  // }
-
-  public Boolean getPap() {
-    return pap;
-  }
-
-  public void setPap(Boolean pap) {
-    this.pap = pap;
+    return identificador;
   }
 }
