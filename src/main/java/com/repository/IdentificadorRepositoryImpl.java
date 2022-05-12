@@ -19,6 +19,9 @@ import com.enumeration.TipoInformacaoEnum;
 import com.models.Identificador;
 import com.models.InformacaoGerencial;
 import com.models.Veiculo;
+import com.parameters.IdentificadorParameter;
+
+import org.apache.commons.lang3.StringUtils;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -46,6 +49,34 @@ public class IdentificadorRepositoryImpl implements IdentificadorRepository {
     query.append(", ").append(OrdenacaoEnum.PLACA.getColuna()).append(" ");
 
     return consultarIdentificadores(idConta, query, gerencial, somentePlacas);
+  }
+
+  @Override
+  public Multi<Identificador> listPaginadoByIdConta(Integer idConta,
+      IdentificadorParameter parameters) {
+    final StringBuilder query = getDefaultQuery(parameters.isGerencial(), false);
+
+    condicoesIdentificador(query, parameters);
+
+    orderByIdentificador(query, OrdenacaoEnum.SITUACAO);
+    query.append(", ").append(OrdenacaoEnum.PLACA.getColuna()).append(" ");
+
+    paginacaoIdentificador(query, parameters);
+
+    return consultarIdentificadores(idConta, query, parameters.isGerencial(),
+        parameters.isSomentePlacas());
+  }
+
+  @Override
+  public Uni<Integer> contarIdentificadores(Integer idConta, IdentificadorParameter parameters) {
+    StringBuilder queryPaginacao = getQuantidadeQuery(parameters);
+    var result = executeQuery(idConta, queryPaginacao, parameters.isGerencial());
+    var qtd = result.onItem().transform(rowSet -> {
+      var row = rowSet.iterator().next();
+      return row.getInteger("qtdIdentificadores");
+    });
+
+    return qtd;
   }
 
   private Multi<Identificador> consultarIdentificadores(Integer idConta, final StringBuilder query, boolean gerencial,
@@ -200,5 +231,50 @@ public class IdentificadorRepositoryImpl implements IdentificadorRepository {
 
   private void orderByIdentificador(StringBuilder query, OrdenacaoEnum ordenacao) {
     query.append(" ORDER BY ").append(ordenacao.getColuna()).append(" ");
+  }
+
+  private void condicoesIdentificador(StringBuilder query, IdentificadorParameter parameter) {
+
+    if (parameter.getVeiculo() != null && !StringUtils.isEmpty(parameter.getVeiculo().getPlaca())) {
+      if (!StringUtils.isEmpty(parameter.getCodIdentificador())) {
+        query.append(" AND ( ");
+        query.append(" idf.placa like '").append(parameter.getVeiculo().getPlaca()).append("%'");
+        query.append(" OR idf.codIdentificador like '").append(parameter.getCodIdentificador()).append("%'");
+        query.append(" ) ");
+      } else {
+        query.append(" AND idf.placa like '").append(parameter.getVeiculo().getPlaca()).append("%'");
+      }
+    } else if (!StringUtils.isEmpty(parameter.getCodIdentificador())) {
+      query.append(" AND idf.codIdentificador like '").append(parameter.getCodIdentificador()).append("%'");
+    }
+
+    if (parameter.getAtivos() != null) {
+      query.append(" AND idf.situacao = '").append(parameter.getAtivos().booleanValue() ? "ATIVO" : "INATIVO")
+          .append("' ");
+    }
+
+  }
+
+  private void paginacaoIdentificador(StringBuilder query, IdentificadorParameter parameter) {
+    int pagina = parameter.getPaginacao().getPagina();
+    int quantidade = parameter.getPaginacao().getQuantidade();
+    int min = pagina == 1 ? 0 : quantidade * (pagina - 1);
+
+    query.append(" LIMIT ").append(min).append(", ").append(quantidade);
+
+    query.append(";");
+  }
+
+  private StringBuilder getQuantidadeQuery(IdentificadorParameter parameter) {
+    StringBuilder query = new StringBuilder();
+    if (parameter.isSomentePlacas()) {
+      query.append(" SELECT count(DISTINCT idf.placa) as qtdIdentificadores ");
+    } else {
+      query.append(" SELECT count(1) as qtdIdentificadores ");
+    }
+    buildFromQuery(parameter.isGerencial(), query);
+    buildWhereQuery(query);
+    condicoesIdentificador(query, parameter);
+    return query;
   }
 }
